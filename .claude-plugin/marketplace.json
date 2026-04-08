@@ -1,0 +1,48 @@
+{
+  "name": "etopro-plugins",
+  "owner": {
+    "name": "Etopro"
+  },
+  "metadata": {
+    "description": "Community plugins for Claude Code - development workflow utilities, formatters, and productivity tools",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "code-formatter",
+      "source": "code-formatter",
+      "description": "Universal code formatter and linter with support for ruff, black, prettier, eslint, and more",
+      "version": "1.0.0",
+      "author": {
+        "name": "Etopro"
+      },
+      "category": "code-quality",
+      "tags": ["formatter", "linter", "ruff", "black", "prettier", "eslint"],
+      "keywords": ["format", "lint", "code-quality", "style"]
+    },
+    {
+      "name": "git-workflow",
+      "source": "git-workflow",
+      "description": "Git workflow automation for commits, branches, and project management",
+      "version": "1.0.0",
+      "author": {
+        "name": "Etopro"
+      },
+      "category": "workflow",
+      "tags": ["git", "commit", "branch", "workflow"],
+      "keywords": ["git", "version-control", "productivity"]
+    },
+    {
+      "name": "dokku",
+      "source": {
+        "source": "github",
+        "repo": "etopro/skill-dokku"
+      },
+      "description": "Dokku deployment automation skill for managing apps and deployments",
+      "category": "deployment",
+      "tags": ["dokku", "deployment", "devops"],
+      "keywords": ["deployment", "dokku", "paas"]
+    }
+  ]
+}
