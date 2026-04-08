@@ -43,7 +43,7 @@
         "source": "github",
         "repo": "etopro/skill-dokku"
       },
-      "version": "1.0.5",
+      "version": "1.0.6",
       "category": "deployment",
       "homepage": "https://github.com/etopro/skill-dokku",
       "tags": ["dokku", "deployment", "devops"],
