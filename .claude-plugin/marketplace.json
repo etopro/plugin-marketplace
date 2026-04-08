@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "code-formatter",
-      "source": "code-formatter",
+      "source": "./code-formatter",
       "description": "Universal code formatter and linter with support for ruff, black, prettier, eslint, and more",
       "version": "1.0.0",
       "author": {
@@ -23,7 +23,7 @@
     },
     {
       "name": "git-workflow",
-      "source": "git-workflow",
+      "source": "./git-workflow",
       "description": "Git workflow automation for commits, branches, and project management",
       "version": "1.0.0",
       "author": {
