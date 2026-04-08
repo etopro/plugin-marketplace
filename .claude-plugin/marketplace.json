@@ -34,7 +34,7 @@
       "keywords": ["git", "version-control", "productivity"]
     },
     {
-      "name": "dokku",
+      "name": "dokku-manage",
       "description": "Dokku deployment automation skill for managing apps and deployments on Linux VMs",
       "author": {
         "name": "Etopro"
