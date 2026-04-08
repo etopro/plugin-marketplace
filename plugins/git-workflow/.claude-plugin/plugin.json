@@ -1,0 +1,12 @@
+{
+  "name": "git-workflow",
+  "description": "Git workflow automation for commits, branches, and project management",
+  "version": "1.0.0",
+  "author": {
+    "name": "Etopro"
+  },
+  "license": "CC-BY-NC-4.0",
+  "skills": [
+    "skills/git-workflow.md"
+  ]
+}
