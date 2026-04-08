@@ -35,13 +35,17 @@
     },
     {
       "name": "dokku",
+      "description": "Dokku deployment automation skill for managing apps and deployments on Linux VMs",
+      "author": {
+        "name": "Etopro"
+      },
       "source": {
         "source": "github",
         "repo": "etopro/skill-dokku"
       },
-      "description": "Dokku deployment automation skill for managing apps and deployments",
       "version": "1.0.5",
       "category": "deployment",
+      "homepage": "https://github.com/etopro/skill-dokku",
       "tags": ["dokku", "deployment", "devops"],
       "keywords": ["deployment", "dokku", "paas"]
     }
