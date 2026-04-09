@@ -50,13 +50,22 @@ Git workflow automation for commits, branches, and project management.
 /plugin install git-workflow@plugin-marketplace
 ```
 
-### dokku
+### dokku-manage
 
-Dokku deployment automation skill for managing apps and deployments.
+Dokku deployment automation skill for managing apps and deployments on Linux VMs.
 
 **Install:**
 ```bash
-/plugin install dokku@plugin-marketplace
+/plugin install dokku-manage@plugin-marketplace
+```
+
+### skill-email-otp
+
+Python CLI tool and skill for creating temporary email addresses and automatically extracting OTP codes and validation links from incoming emails.
+
+**Install:**
+```bash
+/plugin install skill-email-otp@plugin-marketplace
 ```
 
 ## Usage
