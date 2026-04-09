@@ -11,13 +11,13 @@ This marketplace distributes plugins for Claude Code, an agentic coding tool tha
 Add this marketplace to Claude Code:
 
 ```bash
-/plugin marketplace add etopro/etopro-plugins
+/plugin marketplace add etopro/plugin-marketplace
 ```
 
 Or use with the CLI:
 
 ```bash
-claude plugin marketplace add etopro/etopro-plugins
+claude plugin marketplace add etopro/plugin-marketplace
 ```
 
 ## Available Plugins
@@ -33,7 +33,7 @@ Universal code formatter and linter with support for ruff, black, prettier, esli
 
 **Install:**
 ```bash
-/plugin install code-formatter@etopro-plugins
+/plugin install code-formatter@plugin-marketplace
 ```
 
 ### git-workflow
@@ -47,7 +47,7 @@ Git workflow automation for commits, branches, and project management.
 
 **Install:**
 ```bash
-/plugin install git-workflow@etopro-plugins
+/plugin install git-workflow@plugin-marketplace
 ```
 
 ### dokku
@@ -56,7 +56,7 @@ Dokku deployment automation skill for managing apps and deployments.
 
 **Install:**
 ```bash
-/plugin install dokku@etopro-plugins
+/plugin install dokku@plugin-marketplace
 ```
 
 ## Usage
@@ -83,4 +83,4 @@ This marketplace is licensed under [CC BY-NC 4.0](LICENSE) - Creative Commons At
 
 - [Plugin Development Guide](docs/plugin-development.md)
 - [Claude Code Documentation](https://code.claude.com)
-- [Report Issues](https://github.com/etopro/etopro-plugins/issues)
+- [Report Issues](https://github.com/etopro/plugin-marketplace/issues)

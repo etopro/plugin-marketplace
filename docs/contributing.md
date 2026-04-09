@@ -77,12 +77,12 @@ Before submitting, test your plugin locally:
 
 1. **Add the marketplace locally:**
    ```bash
-   /plugin marketplace add /path/to/etopro-plugins
+   /plugin marketplace add /path/to/plugin-marketplace
    ```
 
 2. **Install your plugin:**
    ```bash
-   /plugin install your-plugin@etopro-plugins
+   /plugin install your-plugin@plugin-marketplace
    ```
 
 3. **Test each command/skill:**

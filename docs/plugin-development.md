@@ -171,13 +171,13 @@ Help me write a commit message for fixing a bug in the login system.
 ### 1. Add the Marketplace
 
 ```bash
-/plugin marketplace add /path/to/etopro-plugins
+/plugin marketplace add /path/to/plugin-marketplace
 ```
 
 ### 2. Install Your Plugin
 
 ```bash
-/plugin install your-plugin@etopro-plugins
+/plugin install your-plugin@plugin-marketplace
 ```
 
 ### 3. Test the Plugin
