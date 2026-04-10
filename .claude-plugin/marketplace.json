@@ -68,7 +68,7 @@
     {
       "name": "sliplane",
       "source": "./sliplane",
-      "description": "Управление платформой Sliplane для деплоя Docker-контейнеров на Hetzner",
+      "description": "Manage the Sliplane platform for deploying Docker containers on Hetzner",
       "version": "1.0.0",
       "author": {
         "name": "aivibe"

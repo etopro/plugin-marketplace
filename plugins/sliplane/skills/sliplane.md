@@ -1,25 +1,25 @@
 ---
 name: sliplane
-description: "Управление платформой Sliplane для деплоя Docker-контейнеров на Hetzner. Используй этот скилл когда пользователь упоминает Sliplane, хочет задеплоить контейнер на Hetzner, настроить MCP-сервер Sliplane, получить API-токен Sliplane, управлять сервисами/серверами через Sliplane, смотреть логи или статус деплоя на Sliplane, перезапустить сервис на Sliplane, или работать с deploy hooks. Также активируй если пользователь спрашивает про подключение Sliplane к Claude Code или IDE."
+description: "Manage the Sliplane platform for deploying Docker containers on Hetzner. Activate this skill when the user mentions Sliplane, wants to deploy a container on Hetzner, configure the Sliplane MCP server, get a Sliplane API token, manage services/servers via Sliplane, view logs or deployment status on Sliplane, restart a service on Sliplane, or work with deploy hooks. Also activate if the user asks about connecting Sliplane to Claude Code or an IDE."
 user-invocable: true
-argument-hint: "[команда или вопрос по Sliplane]"
+argument-hint: "[command or question about Sliplane]"
 ---
 
-# Sliplane — управление деплоем контейнеров
+# Sliplane — Container Deployment Management
 
-Sliplane — это платформа для простого и экономичного деплоя Docker-контейнеров на серверах Hetzner. Она поддерживает continuous deployment, автоматические healthcheck'и, управление переменными окружения и SSH-доступ.
+Sliplane is a platform for simple and cost-effective deployment of Docker containers on Hetzner servers. It supports continuous deployment, automatic healthchecks, environment variable management, and SSH access.
 
-## Шаг 1: Проверь подключение MCP-сервера
+## Step 1: Check MCP Server Connection
 
-Перед началом работы проверь, подключён ли MCP-сервер Sliplane. Посмотри доступные инструменты — если есть инструменты с префиксом `mcp__sliplane__`, значит сервер уже подключён. Переходи к Шагу 3.
+Before starting, verify that the Sliplane MCP server is connected. Check available tools — if tools with the `mcp__sliplane__` prefix are present, the server is already connected. Proceed to Step 3.
 
-Если инструменты Sliplane не найдены — помоги пользователю настроить подключение (Шаг 2).
+If Sliplane tools are not found — help the user set up the connection (Step 2).
 
-## Шаг 2: Настройка подключения
+## Step 2: Setup Connection
 
-### Подключение MCP-сервера
+### Connecting the MCP Server
 
-Выполни команду с плейсхолдером вместо ключа:
+Run the command with placeholders instead of actual keys:
 
 ```bash
 claude mcp add sliplane https://mcp.sliplane.io \
@@ -28,26 +28,26 @@ claude mcp add sliplane https://mcp.sliplane.io \
     -H "X-Team-Id: YOUR_TEAM_ID_HERE"
 ```
 
-Это создаст конфигурацию MCP-сервера. Никогда не проси пользователя прислать API-ключ в чат — это небезопасно.
+This will create the MCP server configuration. Never ask the user to send the API key in chat — this is insecure.
 
-### Где вставить настоящий API-ключ
+### Where to Insert the Real API Key
 
-После выполнения команды:
+After running the command:
 
-1. Получи ключ: дашборд Sliplane на **https://sliplane.io** (авторизация через GitHub) → **Team Settings** → раздел **API Keys** (подробнее: https://docs.sliplane.io/mcp/getting-started)
-2. Там же на странице **Team Settings** найди **Team ID** (формат `org_xxxxxxxxxxxx`) — он отображается вверху страницы
-3. Открой файл конфигурации для редактирования командой:
-   - **Для пользователя (все проекты)**: `code ~/.claude.json`
-   - **Для текущего проекта**: `code .mcp.json`
-4. Найди секцию `mcpServers` → `sliplane` → `headers`:
-   - Замени `YOUR_API_KEY_HERE` на настоящий ключ
-   - Замени `YOUR_TEAM_ID_HERE` на реальный Team ID
+1. Get the key: Sliplane dashboard at **https://sliplane.io** (login via GitHub) → **Team Settings** → **API Keys** section (more details: https://docs.sliplane.io/mcp/getting-started)
+2. On the same **Team Settings** page, find the **Team ID** (format `org_xxxxxxxxxxxx`) — displayed at the top of the page
+3. Open the config file for editing:
+   - **For user (all projects)**: `code ~/.claude.json`
+   - **For current project**: `code .mcp.json`
+4. Find the `mcpServers` → `sliplane` → `headers` section:
+   - Replace `YOUR_API_KEY_HERE` with the real key
+   - Replace `YOUR_TEAM_ID_HERE` with the real Team ID
 
-**⚠️ Важно: формат заголовка Authorization**
+**⚠️ Important: Authorization header format**
 
-Значение должно быть именно `"Bearer <ваш-ключ>"` — с префиксом `Bearer` и пробелом перед ключом. Без этого префикса API вернёт ошибку 401.
+The value must be exactly `"Bearer <your-key>"` — with the `Bearer` prefix and a space before the key. Without this prefix the API will return a 401 error.
 
-Пример итоговой конфигурации (секция `mcpServers`):
+Example final configuration (`mcpServers` section):
 ```json
 {
   "sliplane": {
@@ -61,73 +61,73 @@ claude mcp add sliplane https://mcp.sliplane.io \
 }
 ```
 
-### Проверка подключения
+### Verifying the Connection
 
-После замены ключа:
+After replacing the key:
 
-1. Попроси пользователя выполнить `/clear` или перезапустить сессию Claude Code
-2. Вызови `mcp__sliplane__listProjects` для проверки подключения
-3. Если получена ошибка 401 — попроси пользователя проверить:
-   - Есть ли префикс `Bearer ` (с пробелом) перед ключом
-   - Есть ли заголовок `X-Team-Id` с корректным Team ID
-   - Не содержит ли значение лишних кавычек или пробелов
-   - Актуален ли ключ (не отозван ли в дашборде)
+1. Ask the user to run `/clear` or restart the Claude Code session
+2. Call `mcp__sliplane__listProjects` to verify the connection
+3. If a 401 error is received — ask the user to check:
+   - Is the `Bearer ` prefix (with a space) present before the key
+   - Is the `X-Team-Id` header present with the correct Team ID
+   - Does the value contain extra quotes or spaces
+   - Is the key still valid (not revoked in the dashboard)
 
-## Обработка ошибок MCP
+## MCP Error Handling
 
-Если один вызов вернул 401 — НЕ лезь в конфиги. Сначала попробуй другой вызов того же сервера (например `listServers` или `listProjects`). Только если несколько разных вызовов возвращают 401 — тогда проверяй конфигурацию токена.
+If one call returned 401 — do NOT touch the config files. First try another call to the same server (e.g. `listServers` or `listProjects`). Only if several different calls return 401 — then check the token configuration.
 
-## Шаг 3: Работа с Sliplane через MCP
+## Step 3: Working with Sliplane via MCP
 
-После подключения MCP-сервера используй доступные инструменты Sliplane для выполнения задач пользователя. MCP-сервер зеркалирует возможности публичного API Sliplane.
+After connecting the MCP server, use the available Sliplane tools to complete the user's tasks. The MCP server mirrors the capabilities of the Sliplane public API.
 
-### Типичные задачи
+### Common Tasks
 
-**Просмотр информации:**
-- Список проектов и сервисов
-- Статус сервисов и серверов
-- Информация о серверах (ресурсы, регион)
+**Viewing information:**
+- List projects and services
+- Service and server status
+- Server information (resources, region)
 
-**Деплой и управление:**
-- Запуск нового деплоя / редеплоя сервиса
-- Управление переменными окружения
-- Настройка правил деплоя (autodeploy, include/ignore paths)
+**Deployment and management:**
+- Trigger a new deploy / redeploy of a service
+- Manage environment variables
+- Configure deploy rules (autodeploy, include/ignore paths)
 
-**Мониторинг:**
-- Просмотр логов (runtime и build)
-- События сервиса (деплои, healthcheck'и, домены, volumes)
+**Monitoring:**
+- View logs (runtime and build)
+- Service events (deployments, healthchecks, domains, volumes)
 
-### Альтернативные способы управления
+### Alternative Management Methods
 
-Если MCP недоступен или нужна дополнительная функциональность:
+If MCP is unavailable or additional functionality is needed:
 
-**Deploy Hook** — для программного запуска деплоя:
+**Deploy Hook** — for triggering deploys programmatically:
 ```bash
 curl "https://api.sliplane.io/deploy/<service-id>/<deploy-secret>?tag=<tag>"
 ```
-Service ID и deploy secret можно найти в настройках сервиса в дашборде Sliplane.
+Service ID and deploy secret can be found in the service settings in the Sliplane dashboard.
 
-**SSH-доступ** — для прямого доступа к серверу:
+**SSH Access** — for direct server access:
 ```bash
 ssh root@<your-subdomain>.sliplane.app -p 2222
 ```
 
-**Проброс портов** — для доступа к приватным сервисам:
+**Port Forwarding** — for accessing private services:
 ```bash
 ssh -L 8080:<your-app.internal>:<port> root@<your-subdomain>.sliplane.app -p 2222
 ```
 
-**GitHub Actions** — для CI/CD:
+**GitHub Actions** — for CI/CD:
 ```yaml
 - name: Deploy to Sliplane
   run: |
     curl "https://api.sliplane.io/deploy/your-service-id/${{ secrets.DEPLOY_SECRET }}?tag=${{ github.sha }}"
 ```
 
-## Важные моменты
+## Important Notes
 
-- Sliplane использует Docker-контейнеры — убедись что у сервиса есть Dockerfile или образ в реестре
-- Каждый сервис может иметь один публичный порт, определяемый через переменную `PORT`
-- При неудачном деплое Sliplane автоматически сохраняет предыдущую рабочую версию
-- Приватные сервисы (без expose) доступны другим сервисам на том же сервере через internal hostname
-- Изменение настроек сервиса автоматически запускает редеплой
+- Sliplane uses Docker containers — make sure the service has a Dockerfile or an image in a registry
+- Each service can have one public port, defined via the `PORT` environment variable
+- On a failed deployment, Sliplane automatically rolls back to the previous working version
+- Private services (without expose) are accessible to other services on the same server via internal hostname
+- Changing service settings automatically triggers a redeploy
