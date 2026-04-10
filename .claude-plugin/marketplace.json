@@ -64,6 +64,18 @@
       "homepage": "https://github.com/etopro/skill-email-otp",
       "tags": ["email", "otp", "verification", "temp-mail", "testing"],
       "keywords": ["email", "otp", "verification", "testing", "automation"]
+    },
+    {
+      "name": "sliplane",
+      "source": "./sliplane",
+      "description": "Manage the Sliplane platform for deploying Docker containers on Hetzner",
+      "version": "1.0.0",
+      "author": {
+        "name": "aivibe"
+      },
+      "category": "deployment",
+      "tags": ["sliplane", "docker", "deployment", "hetzner"],
+      "keywords": ["sliplane", "deployment", "paas", "docker", "hetzner"]
     }
   ]
 }
