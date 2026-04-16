@@ -115,12 +115,23 @@
         "name": "aivibe"
       },
       "category": "deployment",
-      "tags": ["sliplane", "docker", "deployment", "hetzner"],
-      "keywords": ["sliplane", "deployment", "paas", "docker", "hetzner"]
+      "tags": [
+        "sliplane",
+        "docker",
+        "deployment",
+        "hetzner"
+      ],
+      "keywords": [
+        "sliplane",
+        "deployment",
+        "paas",
+        "docker",
+        "hetzner"
+      ]
     },
     {
       "name": "yandex-direct",
-      "description": "Управление Яндекс.Директ: кампании, объявления, ставки, OAuth",
+      "description": "Yandex Direct ad management: campaigns, ads, bids, OAuth",
       "author": {
         "name": "axisrow"
       },
@@ -128,7 +139,7 @@
         "source": "github",
         "repo": "axisrow/yandex-direct-mcp-plugin"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "utilities",
       "homepage": "https://github.com/axisrow/yandex-direct-mcp-plugin",
       "tags": [
