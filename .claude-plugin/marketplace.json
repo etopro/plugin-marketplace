@@ -139,7 +139,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/yandex-direct-mcp-plugin.git"
       },
-      "version": "0.1.2.1",
+      "version": "0.1.2.2",
       "category": "utilities",
       "homepage": "https://github.com/axisrow/yandex-direct-mcp-plugin",
       "tags": [
