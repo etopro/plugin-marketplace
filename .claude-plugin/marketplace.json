@@ -61,10 +61,10 @@
         "name": "Etopro"
       },
       "source": {
-        "source": "github",
-        "repo": "etopro/skill-dokku"
+        "source": "url",
+        "url": "https://github.com/etopro/skill-dokku.git"
       },
-      "version": "1.0.6",
+      "version": "1.0.7",
       "category": "deployment",
       "homepage": "https://github.com/etopro/skill-dokku",
       "tags": [
@@ -85,8 +85,8 @@
         "name": "Etopro"
       },
       "source": {
-        "source": "github",
-        "repo": "etopro/skill-email-otp"
+        "source": "url",
+        "url": "https://github.com/etopro/skill-email-otp.git"
       },
       "version": "1.0.0",
       "category": "utilities",
