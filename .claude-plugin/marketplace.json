@@ -18,8 +18,20 @@
         "name": "Etopro"
       },
       "category": "code-quality",
-      "tags": ["formatter", "linter", "ruff", "black", "prettier", "eslint"],
-      "keywords": ["format", "lint", "code-quality", "style"]
+      "tags": [
+        "formatter",
+        "linter",
+        "ruff",
+        "black",
+        "prettier",
+        "eslint"
+      ],
+      "keywords": [
+        "format",
+        "lint",
+        "code-quality",
+        "style"
+      ]
     },
     {
       "name": "git-workflow",
@@ -30,8 +42,17 @@
         "name": "Etopro"
       },
       "category": "workflow",
-      "tags": ["git", "commit", "branch", "workflow"],
-      "keywords": ["git", "version-control", "productivity"]
+      "tags": [
+        "git",
+        "commit",
+        "branch",
+        "workflow"
+      ],
+      "keywords": [
+        "git",
+        "version-control",
+        "productivity"
+      ]
     },
     {
       "name": "dokku-manage",
@@ -46,8 +67,16 @@
       "version": "1.0.6",
       "category": "deployment",
       "homepage": "https://github.com/etopro/skill-dokku",
-      "tags": ["dokku", "deployment", "devops"],
-      "keywords": ["deployment", "dokku", "paas"]
+      "tags": [
+        "dokku",
+        "deployment",
+        "devops"
+      ],
+      "keywords": [
+        "deployment",
+        "dokku",
+        "paas"
+      ]
     },
     {
       "name": "skill-email-otp",
@@ -62,8 +91,20 @@
       "version": "1.0.0",
       "category": "utilities",
       "homepage": "https://github.com/etopro/skill-email-otp",
-      "tags": ["email", "otp", "verification", "temp-mail", "testing"],
-      "keywords": ["email", "otp", "verification", "testing", "automation"]
+      "tags": [
+        "email",
+        "otp",
+        "verification",
+        "temp-mail",
+        "testing"
+      ],
+      "keywords": [
+        "email",
+        "otp",
+        "verification",
+        "testing",
+        "automation"
+      ]
     },
     {
       "name": "sliplane",
@@ -76,6 +117,34 @@
       "category": "deployment",
       "tags": ["sliplane", "docker", "deployment", "hetzner"],
       "keywords": ["sliplane", "deployment", "paas", "docker", "hetzner"]
+    },
+    {
+      "name": "yandex-direct",
+      "description": "Управление Яндекс.Директ: кампании, объявления, ставки, OAuth",
+      "author": {
+        "name": "axisrow"
+      },
+      "source": {
+        "source": "github",
+        "repo": "axisrow/yandex-direct-mcp-plugin"
+      },
+      "version": "0.1.0",
+      "category": "utilities",
+      "homepage": "https://github.com/axisrow/yandex-direct-mcp-plugin",
+      "tags": [
+        "yandex",
+        "direct",
+        "advertising",
+        "mcp",
+        "oauth"
+      ],
+      "keywords": [
+        "yandex-direct",
+        "ads",
+        "campaigns",
+        "bidding",
+        "russia"
+      ]
     }
   ]
 }
