@@ -7,8 +7,8 @@
   },
   "license": "CC-BY-NC-4.0",
   "commands": [
-    "commands/formatter.md",
-    "commands/lint.md",
-    "commands/check-format.md"
+    "./commands/formatter.md",
+    "./commands/lint.md",
+    "./commands/check-format.md"
   ]
 }

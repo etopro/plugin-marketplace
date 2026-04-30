@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "code-formatter",
-      "source": "./code-formatter",
+      "source": "./plugins/code-formatter",
       "description": "Universal code formatter and linter with support for ruff, black, prettier, eslint, and more",
       "version": "1.0.0",
       "author": {
@@ -35,7 +35,7 @@
     },
     {
       "name": "git-workflow",
-      "source": "./git-workflow",
+      "source": "./plugins/git-workflow",
       "description": "Git workflow automation for commits, branches, and project management",
       "version": "1.0.0",
       "author": {
@@ -108,7 +108,7 @@
     },
     {
       "name": "sliplane",
-      "source": "./sliplane",
+      "source": "./plugins/sliplane",
       "description": "Manage the Sliplane platform for deploying Docker containers on Hetzner",
       "version": "1.0.0",
       "author": {
