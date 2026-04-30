@@ -139,7 +139,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/yandex-direct-mcp-plugin.git"
       },
-      "version": "0.1.6",
+      "version": "0.1.7",
       "category": "utilities",
       "homepage": "https://github.com/axisrow/yandex-direct-mcp-plugin",
       "tags": [
@@ -185,6 +185,28 @@
         "github",
         "ci",
         "claude-action"
+      ]
+    },
+    {
+      "name": "claude-tools",
+      "source": "./claude-tools",
+      "description": "Controller cron that schedules Claude Code pings at the detected 5-hour window plus 20 seconds",
+      "version": "0.1.0",
+      "author": {
+        "name": "axisrow"
+      },
+      "category": "utilities",
+      "tags": [
+        "cron",
+        "rate-limit",
+        "claude-code",
+        "prewarm"
+      ],
+      "keywords": [
+        "5-hour",
+        "limits",
+        "automation",
+        "cron"
       ]
     }
   ]
