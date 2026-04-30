@@ -44,14 +44,29 @@ install_scheduled_ping() {
 
 ensure_scheduled_ping() {
     local target=$1
-    local existing block
+    local existing current_block desired_block claude_dir
     if existing=$(crontab -l 2>/dev/null); then :; else existing=""; fi
-    block=$(printf '%s' "$existing" | ct_extract_marker "$CT_PING_MARKER")
-    if printf '%s' "$block" | grep -q -- "--target $target"; then
+    current_block=$(printf '%s' "$existing" | ct_extract_marker "$CT_PING_MARKER")
+
+    # Build the block we *would* install and compare against current. This
+    # catches not just a stale target but also a stale PING_SCRIPT path or a
+    # stale claude binary dir (e.g. plugin reinstalled at a different path).
+    if command -v claude >/dev/null 2>&1; then
+        claude_dir=$(dirname "$(command -v claude)")
+    else
+        claude_dir="/usr/local/bin"
+    fi
+    local cron_expr path_line command
+    cron_expr=$(ct_cron_fields_for_epoch "$target")
+    path_line="PATH=${claude_dir}:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
+    command="bash \"$PING_SCRIPT\" --target $target --reason scheduled"
+    desired_block=$(ct_build_block "$CT_PING_MARKER" "$path_line" "$cron_expr" "$command")
+
+    if [ "$current_block" = "$desired_block" ]; then
         log "scheduled ping already current: epoch=$target"
         return
     fi
-    install_scheduled_ping "$target"
+    install_scheduled_ping "$target" "$claude_dir"
 }
 
 NOW=$(date +%s)

@@ -139,15 +139,21 @@ attempt_ping() {
     log "pinging via claude -p \"${CT_PING_PROMPT}\" (${label}; reason=${REASON}; timeout=${CT_PING_TIMEOUT}s)"
     run_with_timeout "$CT_PING_TIMEOUT" claude -p "$CT_PING_PROMPT" >>"$LOG" 2>&1
     rc=$?
-    # rc=0   → claude finished cleanly within timeout
-    # rc=124 → timeout reached; the request reached the server (window started)
-    #          and we don't actually need the response — that's success for us.
-    if [ "$rc" -eq 0 ] || [ "$rc" -eq 124 ]; then
-        log "ping ok (${label}; rc=${rc})"
-        ct_state_write "$STATE" "$now" "$now" "ok:${REASON}:rc${rc}"
+    # Only rc=0 is a confirmed success. rc=124 (timeout) is ambiguous — the
+    # request may not have reached Anthropic at all (DNS/TLS/network startup
+    # can stall longer than 10s), so we cannot claim the rate-limit window
+    # actually started. Treat timeouts as errors and let the retry chain or
+    # next controller pass try again.
+    if [ "$rc" -eq 0 ]; then
+        log "ping ok (${label})"
+        ct_state_write "$STATE" "$now" "$now" "ok:${REASON}"
         return 0
     fi
-    log "ping failed rc=${rc} (${label})"
+    if [ "$rc" -eq 124 ]; then
+        log "ping timed out after ${CT_PING_TIMEOUT}s (${label}); treating as failure"
+    else
+        log "ping failed rc=${rc} (${label})"
+    fi
     ct_state_write "$STATE" "${last:-0}" "$now" "error:rc${rc}:${REASON}"
     return 1
 }

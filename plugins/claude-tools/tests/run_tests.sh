@@ -201,6 +201,78 @@ rm -rf "$fail_dir" "$fail_shim"
 echo "controller wires --no-retry:"
 assert_contains "controller passes --no-retry" "--no-retry" "$(cat "$SCRIPTS/controller.sh")"
 
+echo "timeout treated as failure:"
+# A claude that hangs longer than the ping timeout must be recorded as an
+# error, not as a successful ping — DNS/TLS stalls can time out before the
+# request reaches Anthropic.
+hang_dir=$(mktemp -d)
+hang_shim=$(mktemp -d)
+cat >"$hang_shim/claude" <<'CLAUDE_HANG_EOF'
+#!/usr/bin/env bash
+sleep 60
+CLAUDE_HANG_EOF
+chmod +x "$hang_shim/claude"
+
+PATH="$hang_shim:$PATH" CT_DATA_DIR="$hang_dir" \
+    bash "$SCRIPTS/ping.sh" --no-retry --reason hangtest >/dev/null 2>&1
+assert_contains "hung ping records error state" "error:rc124" "$(cat "$hang_dir/state.json" 2>/dev/null || echo)"
+assert_not_contains "hung ping does NOT record ok state" '"last_attempt_result": "ok' "$(cat "$hang_dir/state.json" 2>/dev/null || echo)"
+assert_contains "hung ping log mentions timed out" "timed out" "$(cat "$hang_dir/ping.log" 2>/dev/null || echo)"
+rm -rf "$hang_dir" "$hang_shim"
+
+echo "scheduled ping refresh on path change:"
+# ensure_scheduled_ping should reinstall when the embedded PING_SCRIPT path
+# differs from the current desired block, even if --target matches.
+refresh_dir=$(mktemp -d)
+shim_dir=$(mktemp -d)
+cat > "$shim_dir/crontab" <<'CRON_REFRESH_EOF'
+#!/usr/bin/env bash
+state="${CT_FAKE_CRONTAB:?missing CT_FAKE_CRONTAB}"
+if [ "${1:-}" = "-l" ]; then [ -f "$state" ] && cat "$state"; exit 0; fi
+if [ "${1:-}" = "-r" ]; then rm -f "$state"; exit 0; fi
+cat > "$state"
+CRON_REFRESH_EOF
+chmod +x "$shim_dir/crontab"
+cat > "$shim_dir/claude" <<'CLAUDE_REFRESH_EOF'
+#!/usr/bin/env bash
+exit 0
+CLAUDE_REFRESH_EOF
+chmod +x "$shim_dir/claude"
+
+export CT_FAKE_CRONTAB="$refresh_dir/crontab"
+PATH_BACKUP=$PATH
+export PATH="$shim_dir:$PATH"
+HOME_BACKUP=$HOME
+export HOME="$refresh_dir"
+
+# Pre-populate state so controller picks a target and fills crontab.
+last_ok=$(( $(date +%s) - 60 ))
+mkdir -p "$refresh_dir/.claude/claude-tools"
+ct_state_write "$refresh_dir/.claude/claude-tools/state.json" "$last_ok" "$last_ok" "ok"
+
+# Initial controller run installs scheduled ping with current PING_SCRIPT.
+bash "$SCRIPTS/controller.sh" >/dev/null 2>&1
+initial_cron=$(cat "$CT_FAKE_CRONTAB")
+assert_contains "initial cron has scheduled-ping marker" "$CT_PING_MARKER BEGIN" "$initial_cron"
+
+# Inject a stale PING_SCRIPT path into the crontab and re-run controller.
+# It should detect the mismatch and rewrite the block.
+sed_inplace=(-i)
+case "$(uname)" in Darwin) sed_inplace=(-i '');; esac
+sed "${sed_inplace[@]}" 's#'"$SCRIPTS/ping.sh"'#/old/stale/path/ping.sh#g' "$CT_FAKE_CRONTAB"
+stale_cron=$(cat "$CT_FAKE_CRONTAB")
+assert_contains "crontab now has stale path"   "/old/stale/path/ping.sh" "$stale_cron"
+
+bash "$SCRIPTS/controller.sh" >/dev/null 2>&1
+refreshed_cron=$(cat "$CT_FAKE_CRONTAB")
+assert_not_contains "stale path was replaced" "/old/stale/path/ping.sh" "$refreshed_cron"
+assert_contains    "refreshed cron uses real path" "$SCRIPTS/ping.sh"    "$refreshed_cron"
+
+unset CT_FAKE_CRONTAB
+export PATH=$PATH_BACKUP
+export HOME=$HOME_BACKUP
+rm -rf "$refresh_dir" "$shim_dir"
+
 echo "uninstall:"
 uni_out=$(bash "$SCRIPTS/uninstall.sh" --dry-run 2>&1)
 assert_not_contains "uninstall removes all claude blocks" "$CT_MARKER" "$uni_out"
