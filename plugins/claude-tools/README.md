@@ -15,7 +15,7 @@ If you'd opened the session at 07:00 instead — the limit would have run out at
 The window starts on your **first** request. Whoever pings first sets the rhythm.
 
 The obvious fix — drop `claude -p "ping"` into cron every 5 hours and call it a day — but that's a half-measure. And not very vibe-coded:
-- Power went out.
+- Power outage.
 - Wi-Fi died.
 - Laptop was asleep.
 - Run it on your phone? Phones don't have signal everywhere either.

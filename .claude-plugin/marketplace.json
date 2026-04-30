@@ -189,7 +189,7 @@
     },
     {
       "name": "claude-tools",
-      "source": "./claude-tools",
+      "source": "./plugins/claude-tools",
       "description": "Controller cron that schedules Claude Code pings at the detected 5-hour window plus 20 seconds",
       "version": "0.1.0",
       "author": {
