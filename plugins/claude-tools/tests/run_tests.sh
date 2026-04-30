@@ -132,6 +132,49 @@ rm -f "$state_file"
 bash "$SCRIPTS/ping.sh" --target "$(date +%s)" --reason test >/dev/null 2>&1
 assert_contains "ping runner writes ok state" "ok:test" "$(cat "$state_file" 2>/dev/null || echo)"
 
+echo "run_with_timeout normalisation:"
+# Extract the run_with_timeout function from ping.sh via a subshell that
+# also disables PATH so that the bash-fallback branch is exercised on macOS
+# (where `timeout` is rarely installed). We run inline to capture rc.
+rwt_test() {
+    local script
+    script=$(awk '/^run_with_timeout\(\)/,/^}$/' "$SCRIPTS/ping.sh")
+    bash -c "$script
+$1"
+}
+rwt_test 'run_with_timeout 5 true; exit $?'                         ; rc=$?
+assert_eq "rc=0 passes through"          "0"   "$rc"
+rwt_test 'run_with_timeout 5 false; exit $?'                        ; rc=$?
+assert_eq "rc=1 passes through"          "1"   "$rc"
+rwt_test 'run_with_timeout 1 sleep 30; exit $?'                     ; rc=$?
+assert_eq "timeout normalises to 124"    "124" "$rc"
+
+echo "CT_DATA_DIR override:"
+override_dir=$(mktemp -d)
+CT_DATA_DIR="$override_dir" bash "$SCRIPTS/ping.sh" --target "$(date +%s)" --reason override >/dev/null 2>&1
+assert_eq "state goes to override dir" "yes" "$([ -f "$override_dir/state.json" ] && echo yes || echo no)"
+assert_contains "log goes to override dir" "ping" "$(cat "$override_dir/ping.log" 2>/dev/null || echo)"
+rm -rf "$override_dir"
+
+echo "lock TTL behaviour:"
+# Fresh lock blocks a second run.
+lock_dir=$(mktemp -d)
+mkdir "$lock_dir/ping.lock"
+CT_DATA_DIR="$lock_dir" bash "$SCRIPTS/ping.sh" --target "$(date +%s)" --reason locked >/dev/null 2>&1
+assert_contains "fresh lock blocks ping" "another ping in progress" "$(cat "$lock_dir/ping.log" 2>/dev/null || echo)"
+rm -rf "$lock_dir"
+
+# Stale lock (mtime older than TTL) gets reclaimed.
+stale_dir=$(mktemp -d)
+mkdir "$stale_dir/ping.lock"
+# Force lock mtime to 5 hours ago (> 4h30m TTL).
+old=$(( $(date +%s) - 5 * 3600 ))
+touch -t "$(date -r "$old" '+%Y%m%d%H%M.%S' 2>/dev/null || date -d "@$old" '+%Y%m%d%H%M.%S')" "$stale_dir/ping.lock"
+CT_DATA_DIR="$stale_dir" bash "$SCRIPTS/ping.sh" --target "$(date +%s)" --reason stale >/dev/null 2>&1
+assert_contains "stale lock reclaimed" "stale lock" "$(cat "$stale_dir/ping.log" 2>/dev/null || echo)"
+assert_contains "stale lock then pings" "ok:stale" "$(cat "$stale_dir/state.json" 2>/dev/null || echo)"
+rm -rf "$stale_dir"
+
 echo "uninstall:"
 uni_out=$(bash "$SCRIPTS/uninstall.sh" --dry-run 2>&1)
 assert_not_contains "uninstall removes all claude blocks" "$CT_MARKER" "$uni_out"
