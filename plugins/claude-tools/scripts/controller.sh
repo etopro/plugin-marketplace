@@ -64,7 +64,11 @@ log "decision: $ACTION ($REASON); now=$NOW last=${LAST:-none}"
 
 if [ "$ACTION" = "ping" ]; then
     log "target missed or absent; running recovery ping"
-    bash "$PING_SCRIPT" --reason "recovery:${REASON}" || true
+    # --no-retry: the controller itself runs hourly, so the hourly cadence is
+    # the external retry. Without --no-retry, a fast-failing claude (e.g.
+    # unauthenticated) would block this call for ~4 hours via ping.sh's
+    # internal retry chain — and freeze /claude-tools:install for that long.
+    bash "$PING_SCRIPT" --no-retry --reason "recovery:${REASON}" || true
     LAST=$(ct_state_get_last "$STATE")
 fi
 

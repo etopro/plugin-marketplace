@@ -175,6 +175,32 @@ assert_contains "stale lock reclaimed" "stale lock" "$(cat "$stale_dir/ping.log"
 assert_contains "stale lock then pings" "ok:stale" "$(cat "$stale_dir/state.json" 2>/dev/null || echo)"
 rm -rf "$stale_dir"
 
+echo "no-retry mode:"
+# With --no-retry, a fast-failing claude must NOT trigger the retry chain.
+# Simulate failure via PATH-shim that returns rc=1 instantly.
+fail_dir=$(mktemp -d)
+fail_shim=$(mktemp -d)
+cat >"$fail_shim/claude" <<'CLAUDE_FAIL_EOF'
+#!/usr/bin/env bash
+echo "Not logged in · Please run /login" >&2
+exit 1
+CLAUDE_FAIL_EOF
+chmod +x "$fail_shim/claude"
+
+start=$(date +%s)
+PATH="$fail_shim:$PATH" CT_DATA_DIR="$fail_dir" \
+    bash "$SCRIPTS/ping.sh" --no-retry --reason notest >/dev/null 2>&1
+elapsed=$(( $(date +%s) - start ))
+assert_eq "no-retry exits fast (<5s)" "yes" "$([ "$elapsed" -lt 5 ] && echo yes || echo no)"
+assert_contains "no-retry records error state" "error:rc1" "$(cat "$fail_dir/state.json" 2>/dev/null || echo)"
+assert_not_contains "no-retry skips retry chain" "retry in" "$(cat "$fail_dir/ping.log" 2>/dev/null || echo)"
+assert_contains "no-retry log mentions mode" "no-retry mode" "$(cat "$fail_dir/ping.log" 2>/dev/null || echo)"
+
+rm -rf "$fail_dir" "$fail_shim"
+
+echo "controller wires --no-retry:"
+assert_contains "controller passes --no-retry" "--no-retry" "$(cat "$SCRIPTS/controller.sh")"
+
 echo "uninstall:"
 uni_out=$(bash "$SCRIPTS/uninstall.sh" --dry-run 2>&1)
 assert_not_contains "uninstall removes all claude blocks" "$CT_MARKER" "$uni_out"

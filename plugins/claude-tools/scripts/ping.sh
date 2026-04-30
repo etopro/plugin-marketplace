@@ -15,6 +15,7 @@ mkdir -p "$DATA_DIR"
 
 TARGET=""
 REASON="manual"
+NO_RETRY=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --target)
@@ -28,8 +29,12 @@ while [ $# -gt 0 ]; do
             REASON=${1:-manual}
             shift
             ;;
+        --no-retry)
+            NO_RETRY=1
+            shift
+            ;;
         -h|--help)
-            echo 'Usage: ping.sh [--target EPOCH] [--reason TEXT]'
+            echo 'Usage: ping.sh [--target EPOCH] [--reason TEXT] [--no-retry]'
             exit 0
             ;;
         *)
@@ -148,6 +153,15 @@ attempt_ping() {
 }
 
 attempt_ping "initial" && exit 0
+
+# --no-retry skips the in-call retry chain. The controller (hourly cron)
+# already provides external retries — re-trying inside this call would
+# block the controller for hours on fast-failing errors (e.g. unauthenticated
+# claude CLI returning rc=1 in <1s, then sleeping ~4h across the chain below).
+if [ "$NO_RETRY" -eq 1 ]; then
+    log "no-retry mode; not retrying in this call"
+    exit 0
+fi
 
 # Retry schedule:
 #   - 5s, 15s    → transient hiccups
