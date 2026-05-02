@@ -56,6 +56,7 @@
     },
     {
       "name": "dokku-manage",
+      "version": "1.1.0",
       "description": "Dokku deployment automation skill for managing apps and deployments on Linux VMs",
       "author": {
         "name": "Etopro"
@@ -64,7 +65,6 @@
         "source": "url",
         "url": "https://github.com/etopro/skill-dokku.git"
       },
-      "version": "1.0.7",
       "category": "deployment",
       "homepage": "https://github.com/etopro/skill-dokku",
       "tags": [
