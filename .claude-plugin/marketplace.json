@@ -56,7 +56,7 @@
     },
     {
       "name": "dokku-manage",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "description": "Dokku deployment automation skill for managing apps and deployments on Linux VMs",
       "author": {
         "name": "Etopro"
