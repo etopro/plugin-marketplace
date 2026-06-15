@@ -159,7 +159,7 @@
     },
     {
       "name": "cycle-review",
-      "description": "Automated PR review cycle: request, triage, fix, merge. Aliased as /cr.",
+      "description": "Automated PR review cycle: request, triage, fix, merge. Cloud (GitHub bots) or local (Claude subagent + Codex when configured) review mode.",
       "author": {
         "name": "axisrow"
       },
@@ -167,7 +167,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/claude-code-cycle-review-skill.git"
       },
-      "version": "0.4.3",
+      "version": "0.4.4",
       "category": "workflow",
       "homepage": "https://github.com/axisrow/claude-code-cycle-review-skill",
       "repository": "https://github.com/axisrow/claude-code-cycle-review-skill",
