@@ -26,10 +26,10 @@ if [ "$dry_run" -eq 1 ]; then
     exit 0
 fi
 
+# Same removal the controller does for self-heal; one shared code path.
+ct_self_remove_cron
 if [ -z "$trimmed" ]; then
-    crontab -r 2>/dev/null || true
     echo "claude-tools cron removed (crontab is now empty)."
 else
-    printf '%s' "$filtered" | crontab -
     echo "claude-tools cron removed."
 fi

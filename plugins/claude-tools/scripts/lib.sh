@@ -113,6 +113,22 @@ ct_filter_existing() {
     '
 }
 
+# ct_self_remove_cron — remove every claude-tools block from the live crontab.
+# Same marker-based filtering as uninstall.sh, factored out so the controller's
+# self-heal path and the manual uninstall stay in lock-step. Safe when no
+# crontab exists. If nothing else remains, drops the crontab entirely.
+ct_self_remove_cron() {
+    local existing filtered trimmed
+    existing=$(crontab -l 2>/dev/null) || return 0
+    filtered=$(printf '%s' "$existing" | ct_filter_existing)
+    trimmed=$(printf '%s' "$filtered" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    if [ -z "$trimmed" ]; then
+        crontab -r 2>/dev/null || true
+    else
+        printf '%s' "$filtered" | crontab -
+    fi
+}
+
 ct_filter_marker() {
     local marker_name=$1
     awk -v marker="$marker_name" '

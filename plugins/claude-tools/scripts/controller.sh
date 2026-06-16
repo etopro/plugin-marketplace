@@ -18,6 +18,19 @@ mkdir -p "$DATA_DIR"
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { printf '[%s] controller: %s\n' "$(ts)" "$*" >> "$LOG"; }
 
+# Self-heal: there is no plugin-uninstall hook in Claude Code, so a removed
+# plugin leaves these cron entries orphaned — they then fail hourly with
+# "No such file or directory" forever (and spam the local mailbox). The
+# controller is the only piece of us that still runs after removal, so it
+# checks whether its sibling ping.sh is still on disk. If not, the plugin is
+# gone (or moved): tear down the whole claude-tools cron block (including this
+# controller entry) and exit.
+if [ ! -f "$PING_SCRIPT" ]; then
+    log "ping.sh not found at $PING_SCRIPT — plugin appears removed; self-removing cron"
+    ct_self_remove_cron
+    exit 0
+fi
+
 install_scheduled_ping() {
     local target=$1
     local claude_dir=${2:-}

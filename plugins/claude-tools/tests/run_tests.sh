@@ -273,6 +273,57 @@ export PATH=$PATH_BACKUP
 export HOME=$HOME_BACKUP
 rm -rf "$refresh_dir" "$shim_dir"
 
+echo "controller self-removes cron when plugin is gone:"
+# Simulate the plugin being deleted: run the controller from a *copy* of
+# scripts/ (so we can delete files without touching the repo), fill the
+# crontab, then remove ping.sh from the copy. The next controller run must
+# detect the missing sibling and tear down the whole claude-tools cron block.
+heal_dir=$(mktemp -d)
+heal_scripts="$heal_dir/scripts"
+mkdir -p "$heal_scripts"
+cp "$SCRIPTS"/lib.sh "$SCRIPTS"/controller.sh "$SCRIPTS"/ping.sh "$heal_scripts/"
+
+heal_shim=$(mktemp -d)
+cat > "$heal_shim/crontab" <<'CRON_HEAL_EOF'
+#!/usr/bin/env bash
+state="${CT_FAKE_CRONTAB:?missing CT_FAKE_CRONTAB}"
+if [ "${1:-}" = "-l" ]; then [ -f "$state" ] && cat "$state"; exit 0; fi
+if [ "${1:-}" = "-r" ]; then rm -f "$state"; exit 0; fi
+cat > "$state"
+CRON_HEAL_EOF
+chmod +x "$heal_shim/crontab"
+cat > "$heal_shim/claude" <<'CLAUDE_HEAL_EOF'
+#!/usr/bin/env bash
+exit 0
+CLAUDE_HEAL_EOF
+chmod +x "$heal_shim/claude"
+
+export CT_FAKE_CRONTAB="$heal_dir/crontab"
+PATH_BACKUP=$PATH
+export PATH="$heal_shim:$PATH"
+HOME_BACKUP=$HOME
+export HOME="$heal_dir"
+
+# Pre-populate state so the controller installs a scheduled-ping block.
+heal_last=$(( $(date +%s) - 60 ))
+mkdir -p "$heal_dir/.claude/claude-tools"
+ct_state_write "$heal_dir/.claude/claude-tools/state.json" "$heal_last" "$heal_last" "ok"
+
+bash "$heal_scripts/controller.sh" >/dev/null 2>&1
+assert_contains "controller filled cron before removal" "$CT_PING_MARKER BEGIN" "$(cat "$CT_FAKE_CRONTAB")"
+
+# Plugin "deleted": ping.sh disappears, controller.sh + lib.sh still present.
+rm -f "$heal_scripts/ping.sh"
+bash "$heal_scripts/controller.sh" >/dev/null 2>&1
+healed_cron=$(cat "$CT_FAKE_CRONTAB" 2>/dev/null || echo)
+assert_not_contains "self-heal removed all claude-tools cron" "$CT_MARKER" "$healed_cron"
+assert_contains "self-heal logged removal" "self-removing cron" "$(cat "$heal_dir/.claude/claude-tools/ping.log" 2>/dev/null || echo)"
+
+unset CT_FAKE_CRONTAB
+export PATH=$PATH_BACKUP
+export HOME=$HOME_BACKUP
+rm -rf "$heal_dir" "$heal_shim"
+
 echo "uninstall:"
 uni_out=$(bash "$SCRIPTS/uninstall.sh" --dry-run 2>&1)
 assert_not_contains "uninstall removes all claude blocks" "$CT_MARKER" "$uni_out"

@@ -37,6 +37,14 @@ And one last safety net: if some ping gets stuck for good — its lock expires o
 
 ---
 
+## Uninstalling
+
+Run `/claude-tools:uninstall` (or `bash scripts/uninstall.sh`) **before** removing the plugin — that's what takes the cron jobs back out. Claude Code has no plugin-uninstall hook, so deleting the plugin alone does not remove them.
+
+As a backstop, since **0.1.1** the hourly watchdog self-heals: when it notices the plugin's own files are gone, it removes the whole claude-tools cron block (itself included) and stops. So even if you forget to uninstall, the cron cleans itself up within the hour — **as long as the watchdog script itself still exists**. If the plugin directory vanished entirely (e.g. a job installed by 0.1.0 pointing at an old cache path), the watchdog can't run at all; remove the leftover lines manually with `crontab -e` or `bash scripts/uninstall.sh`.
+
+---
+
 ## Installation
 
 ```
