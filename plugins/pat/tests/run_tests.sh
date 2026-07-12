@@ -122,6 +122,33 @@ else
     fail "regression guard: old pattern did not leak (guard is broken)"
 fi
 
+# --- CI mode: APP_PRIVATE_KEY env bypasses Bitwarden ---
+# Generate a throwaway RSA key, set it as APP_PRIVATE_KEY, and confirm pat can
+# sign a JWT from it WITHOUT bw on PATH (bw is absent in CI). We can't reach the
+# GitHub API in unit tests, so we verify the JWT is produced from the env PEM
+# with bw made unfindable.
+ci_tmpkey=$(mktemp -d)
+if openssl genrsa -out "$ci_tmpkey/key.pem" 2048 >/dev/null 2>&1; then
+    ci_pem=$(cat "$ci_tmpkey/key.pem")
+    ci_jwt=$(APP_PRIVATE_KEY="$ci_pem" PATH="/usr/bin:/bin" \
+        bash -c '
+        . "'"$SCRIPTS"'/pat_lib/jwt.sh"
+        # emulate pat_with_pem env branch only (no bw, no network)
+        pem_file=$(mktemp -t patci.XXXXXX); chmod 600 "$pem_file"
+        printf "%s\n" "$APP_PRIVATE_KEY" > "$pem_file"
+        pat_jwt_sign "9999999" "$pem_file"
+        rm -f "$pem_file"
+        ')
+    if [ -n "$ci_jwt" ] && [ "$(printf '%s.' "$ci_jwt" | tr -cd '.' | wc -c | tr -d ' ')" = "3" ]; then
+        ok "CI mode: JWT signed from APP_PRIVATE_KEY env (no bw)"
+    else
+        fail "CI mode: JWT signing from env failed"
+    fi
+    rm -rf "$ci_tmpkey"
+else
+    fail "CI mode: openssl available (skipping env-sign test)"
+fi
+
 # --- bw status parsing ---
 bw_stat_locked='{"serverUrl":null,"status":"locked","userEmail":"x@y"}'
 assert_eq "bw_status reads 'locked'" "locked" \
