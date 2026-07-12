@@ -70,6 +70,13 @@ else
     fail "jwt: openssl genrsa available (skipping jwt sign test)"
 fi
 
+# --- pat_resolve_repo URL normalization (BSD-sed-safe, strips .git) ---
+# Reproduces the exact sed pipeline used in pat_resolve_repo.
+norm() { printf '%s' "$1" | sed -E 's#.*[:/]([^/]+/[^/]+)(\.git)?$#\1#' | sed -E 's#\.git$##'; }
+assert_eq "resolve ssh+git url"  "axisrow/profile" "$(norm 'git@github.com:axisrow/profile.git')"
+assert_eq "resolve https url"    "axisrow/profile" "$(norm 'https://github.com/axisrow/profile')"
+assert_eq "resolve https+git"    "axisrow/profile" "$(norm 'https://github.com/axisrow/profile.git')"
+
 # --- PEM temp-file leak regression ---
 # pat_with_pem must set the path in the CALLING shell so the EXIT trap can
 # remove it. Earlier it was called via $(...) (subshell), which leaked a
