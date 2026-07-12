@@ -1,0 +1,13 @@
+{
+  "name": "pat",
+  "description": "Issue short-lived GitHub App installation tokens (no manual PAT) — Bitwarden-backed, one command",
+  "version": "0.1.0",
+  "author": {
+    "name": "axisrow"
+  },
+  "license": "CC-BY-NC-4.0",
+  "keywords": ["github-app", "pat", "token", "bitwarden", "secrets", "ci"],
+  "commands": [
+    "./commands/pat.md"
+  ]
+}

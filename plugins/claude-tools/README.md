@@ -37,7 +37,11 @@ And one last safety net: if some ping gets stuck for good — its lock expires o
 
 ---
 
-## Uninstalling
+## `pat` moved out
+
+The **`pat`** tool (GitHub App installation token, no manual PAT) now lives in its own plugin — see [`plugins/pat`](../pat). It was unrelated to this plugin's rate-limit cron, so it got its own home.
+
+---
 
 Run `/claude-tools:uninstall` (or `bash scripts/uninstall.sh`) **before** removing the plugin — that's what takes the cron jobs back out. Claude Code has no plugin-uninstall hook, so deleting the plugin alone does not remove them.
 
