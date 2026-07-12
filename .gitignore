@@ -16,3 +16,9 @@ Thumbs.db
 # Temporary
 *.tmp
 .tmp/
+
+# Secrets — never commit
+*.pem
+*.key
+.env
+.env.*
