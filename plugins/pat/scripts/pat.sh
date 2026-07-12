@@ -89,20 +89,39 @@ pat_resolve_repo() {
         | sed -E 's#.*[:/]([^/]+/[^/]+?)(\.git)?$#\1#'
 }
 
-# pat_get_pem_file  → writes PEM to a private temp file, echoes its path.
-# The file is 0600 and removed on exit.
+# PEM temp-file lifecycle.
+#
+# SECURITY: the path MUST be managed in the parent shell. Earlier versions echoed
+# the path from pat_get_pem_file and captured it via command substitution
+# (`pem_file=$(pat_get_pem_file)`), which runs the function in a SUBSHELL — the
+# assignment to pat_PEM_TMP never reached the parent, so the EXIT trap saw an
+# empty value and every PEM file was left behind on disk. Callers now invoke
+# pat_with_pem <callback-var> directly (no $(...)), so the trap always cleans up.
 pat_PEM_TMP=""
-pat_cleanup() { [ -n "$pat_PEM_TMP" ] && [ -f "$pat_PEM_TMP" ] && rm -f "$pat_PEM_TMP"; }
-trap pat_cleanup EXIT
-pat_get_pem_file() {
+pat_pem_cleanup() {
+    [ -n "$pat_PEM_TMP" ] && [ -f "$pat_PEM_TMP" ] && rm -f "$pat_PEM_TMP"
+    pat_PEM_TMP=""
+}
+trap pat_pem_cleanup EXIT
+
+# pat_with_pem <var_name>
+# Fetches the PEM from Bitwarden, writes it to a 0600 temp file, and stores the
+# path in the variable NAMED by <var_name> (set in the CALLING shell, not a
+# subshell). Registers the same path in pat_PEM_TMP so the EXIT trap removes it.
+# Removes the file eagerly on any error so nothing persists even mid-run.
+pat_with_pem() {
+    local _out_var=$1
     pat_bw_ensure_unlocked || pat_die "cannot unlock Bitwarden."
     local pem
-    pem=$(pat_bw_get_field "$PAT_BW_ITEM" "$PAT_BW_FIELD")
-    [ -z "$pem" ] && pat_die "empty PEM from Bitwarden item '$PAT_BW_ITEM' field '$PAT_BW_FIELD'."
-    pat_PEM_TMP=$(mktemp -t pat.XXXXXX)
+    pem=$(pat_bw_get_field "$PAT_BW_ITEM" "$PAT_BW_FIELD") || {
+        pat_pem_cleanup; pat_die "failed to read PEM from Bitwarden."
+    }
+    [ -z "$pem" ] && { pat_pem_cleanup; pat_die "empty PEM from Bitwarden item '$PAT_BW_ITEM' field '$PAT_BW_FIELD'."; }
+    pat_PEM_TMP=$(mktemp -t pat.XXXXXX) || { pat_pem_cleanup; pat_die "mktemp failed."; }
     chmod 600 "$pat_PEM_TMP"
-    printf '%s\n' "$pem" >"$pat_PEM_TMP"
-    printf '%s' "$pat_PEM_TMP"
+    printf '%s\n' "$pem" >"$pat_PEM_TMP" || { pat_pem_cleanup; pat_die "failed to write PEM temp file."; }
+    # assign in the calling shell (printf -v does NOT spawn a subshell)
+    printf -v "$_out_var" '%s' "$pat_PEM_TMP"
 }
 
 # pat_installation_id_for <jwt> <app_id>  → echoes the installation id for the app.
@@ -137,7 +156,7 @@ pat_fresh_token() {
     : "${PAT_BW_ITEM:?PAT_BW_ITEM is not set (config or env).}"
 
     local pem_file jwt inst_json token expires
-    pem_file=$(pat_get_pem_file)
+    pat_with_pem pem_file
     jwt=$(pat_jwt_sign "$PAT_APP_ID" "$pem_file")
     [ -z "$jwt" ] && pat_die "JWT signing failed (is the PEM valid?)."
 
@@ -183,8 +202,12 @@ cmd_install() {
     fi
 
     # JWT + App reachable?
-    local pem_file jwt
-    pem_file=$(pat_get_pem_file 2>/dev/null) || { echo "  ✗ cannot read PEM from Bitwarden"; ok=0; }
+    local pem_file=""
+    if pat_with_pem pem_file 2>/dev/null; then
+        : # pem_file now set in this shell
+    else
+        pem_file=""; echo "  ✗ cannot read PEM from Bitwarden"; ok=0
+    fi
     if [ -n "${pem_file:-}" ]; then
         jwt=$(pat_jwt_sign "$PAT_APP_ID" "$pem_file" 2>/dev/null || true)
         if [ -n "$jwt" ] && pat_jwt_app_meta "$jwt" >/dev/null 2>&1; then

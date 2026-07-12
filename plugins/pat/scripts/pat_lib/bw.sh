@@ -37,7 +37,11 @@ pat_bw_ensure_unlocked() {
                 echo "error: empty password" >&2
                 return 1
             fi
-            session=$(BW_SESSION="" bw unlock --raw "$pw" 2>/dev/null) || true
+            # SECURITY: pass the master password via STDIN, never as a CLI
+            # argument — argv is visible to any process via `ps`//proc while bw
+            # runs. `bw unlock --raw` reads the password from stdin.
+            session=$(BW_SESSION="" bw unlock --raw < <(printf '%s\n' "$pw") 2>/dev/null) || true
+            pw=""
             if [ -z "$session" ]; then
                 echo "error: bw unlock failed (wrong password?)" >&2
                 return 1
