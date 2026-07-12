@@ -129,8 +129,8 @@ pat_installation_id_for() {
     local json
     json=$(pat_jwt_installations "$jwt") || pat_die "failed to list App installations."
     printf '%s' "$json" \
-        | jq -r --arg app "$app_id" '.[] | select((.app_id|tostring)==$app) | .id' \
-        | head -1
+        | jq -r --arg app "$app_id" \
+            '[.[] | select((.app_id|tostring)==$app) | .id] | .[0] // empty'
 }
 
 # pat_fresh_token_into <token_var> <expires_var>

@@ -39,30 +39,42 @@ pat_jwt_sign() {
     printf '%s.%s' "$signing_input" "$sig64"
 }
 
+# pat_gh_curl <jwt> <method> <url> [data]
+# curl wrapper that keeps the JWT out of the process argv: the Authorization
+# header is written to a 0600 temp curl-config file and passed via --config,
+# then removed. (curl -H would expose the signed JWT in `ps`.)
+pat_gh_curl() {
+    local jwt=$1 method=$2 url=$3 data=${4:-}
+    local cfg
+    cfg=$(mktemp -t patcurl.XXXXXX) || return 1
+    chmod 600 "$cfg"
+    {
+        printf 'header = "Authorization: Bearer %s"\n' "$jwt"
+        printf 'header = "Accept: application/vnd.github+json"\n'
+        printf 'silent\nfail\nshow-error\nlocation\n'
+        [ -n "$method" ] && printf 'request = "%s"\n' "$method"
+        [ -n "$data" ] && printf 'data = "%s"\n' "$data"
+    } >"$cfg"
+    curl --config "$cfg" "$url" 2>/dev/null
+    local rc=$?
+    rm -f "$cfg"
+    return $rc
+}
+
 # pat_jwt_app_meta <jwt>  → echoes the App JSON from GET /app (for install verification).
 pat_jwt_app_meta() {
-    local jwt=$1
-    curl -fsSL -H "Authorization: Bearer $jwt" \
-        -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/app" 2>/dev/null
+    pat_gh_curl "$1" GET "https://api.github.com/app"
 }
 
 # pat_jwt_installations <jwt>  → echoes the installations JSON array.
 pat_jwt_installations() {
-    local jwt=$1
-    curl -fsSL -H "Authorization: Bearer $jwt" \
-        -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/app/installations" 2>/dev/null
+    pat_gh_curl "$1" GET "https://api.github.com/app/installations"
 }
 
 # pat_installation_token <jwt> <installation_id>
 # Echoes the JSON response from POST /app/installations/<id>/access_tokens
 # (contains .token and .expires_at).
 pat_installation_token() {
-    local jwt=$1
-    local installation_id=$2
-    curl -fsSL -X POST \
-        -H "Authorization: Bearer $jwt" \
-        -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/app/installations/${installation_id}/access_tokens" 2>/dev/null
+    pat_gh_curl "$1" POST \
+        "https://api.github.com/app/installations/${2}/access_tokens"
 }
