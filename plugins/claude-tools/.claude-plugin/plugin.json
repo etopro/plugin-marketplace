@@ -10,7 +10,6 @@
   "commands": [
     "./commands/install.md",
     "./commands/uninstall.md",
-    "./commands/status.md",
-    "./commands/pat.md"
+    "./commands/status.md"
   ]
 }

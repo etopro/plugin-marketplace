@@ -329,63 +329,6 @@ uni_out=$(bash "$SCRIPTS/uninstall.sh" --dry-run 2>&1)
 assert_not_contains "uninstall removes all claude blocks" "$CT_MARKER" "$uni_out"
 
 echo
-echo "pat:"
-
-# --- pat helpers (no network, no Bitwarden, no App) ---
-PAT_LIB="$SCRIPTS/pat_lib"
-# shellcheck source=../scripts/pat_lib/jwt.sh
-. "$PAT_LIB/jwt.sh"
-# shellcheck source=../scripts/pat_lib/bw.sh
-. "$PAT_LIB/bw.sh"
-
-# base64url: no padding, URL-safe alphabet
-b64_out=$(printf '%s' '{"a":"b/c"}' | pat_b64url)
-assert_not_contains "b64url strips padding" "=" "$b64_out"
-# An input whose standard base64 contains '/' (so b64url must map it to '_').
-# '>???' -> base64 'Pj8/Pw==' (contains '/').
-b64_urlsafe_in='>???'
-b64_raw=$(printf '%s' "$b64_urlsafe_in" | base64)
-b64_url=$(printf '%s' "$b64_urlsafe_in" | pat_b64url)
-assert_contains  "raw base64 has / to convert" "/" "$b64_raw"
-assert_not_contains "b64url maps / to _" "/" "$b64_url"
-assert_contains  "b64url uses _ in place of /" "_" "$b64_url"
-# round-trip sanity: known string → known b64url
-assert_eq "b64url of 'hello'" "aGVsbG8" "$(printf '%s' hello | pat_b64url)"
-
-# JWT: signs against a throwaway RSA key; structure must be header.payload.sig
-jwt_tmpkey=$(mktemp -d)
-jwt_key="$jwt_tmpkey/key.pem"
-if openssl genrsa -out "$jwt_key" 2048 >/dev/null 2>&1; then
-    jwt=$(pat_jwt_sign "1234567" "$jwt_key")
-    jwt_parts=$(printf '%s.' "$jwt" | tr -cd '.' | wc -c | tr -d ' ')
-    assert_eq "jwt has three dot-separated parts" "3" "$((jwt_parts + 0))"  # +0 to normalize
-    # header decodes to alg RS256
-    jwt_header_b64=${jwt%%.*}
-    jwt_header_dec=$(printf '%s==' "$jwt_header_b64" | tr '_-' '/+' | base64 -d 2>/dev/null)
-    assert_contains "jwt header alg is RS256" "RS256" "$jwt_header_dec"
-    rm -rf "$jwt_tmpkey"
-else
-    fail "jwt: openssl genrsa available (skipping jwt sign test)"
-fi
-
-# bw status parsing tolerates the locked/unlocked/unauthenticated states
-bw_stat_locked='{"serverUrl":null,"status":"locked","userEmail":"x@y"}'
-assert_eq "bw_status reads 'locked'" "locked" "$(printf '%s' "$bw_stat_locked" | grep -o '\"status\":\"[^\"]*\"' | sed 's/\"status\":\"//;s/\"//' )"
-# (pat_bw_status calls `bw`; we only validate the parse fragment here, not the binary)
-
-# --- pat.sh CLI surface (argparse, no deps exercised) ---
-pat_help=$(bash "$SCRIPTS/pat.sh" help 2>&1)
-assert_contains "pat help lists grant" "grant" "$pat_help"
-assert_contains "pat help lists install" "install" "$pat_help"
-assert_contains "pat help mentions Bitwarden" "Bitwarden" "$pat_help"
-
-pat_bad=$(bash "$SCRIPTS/pat.sh" bogus 2>&1)
-assert_contains "pat unknown subcommand errors" "unknown subcommand" "$pat_bad"
-
-pat_grant_nosecret=$(bash "$SCRIPTS/pat.sh" grant 2>&1)
-assert_contains "pat grant without --secret errors" "secret is required" "$pat_grant_nosecret"
-
-echo
 echo "----------------------------------------"
 TOTAL=$((PASS + FAIL))
 printf 'Result: %d/%d passed\n' "$PASS" "$TOTAL"

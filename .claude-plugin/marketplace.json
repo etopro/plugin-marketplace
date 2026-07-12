@@ -208,6 +208,32 @@
         "automation",
         "cron"
       ]
+    },
+    {
+      "name": "pat",
+      "source": "./plugins/pat",
+      "description": "Issue short-lived GitHub App installation tokens (no manual PAT) — Bitwarden-backed, one command",
+      "version": "0.1.0",
+      "author": {
+        "name": "axisrow"
+      },
+      "category": "utilities",
+      "homepage": "https://github.com/etopro/plugin-marketplace/tree/main/plugins/pat",
+      "tags": [
+        "github-app",
+        "pat",
+        "token",
+        "bitwarden",
+        "secrets",
+        "ci"
+      ],
+      "keywords": [
+        "github-app",
+        "token",
+        "secrets",
+        "bitwarden",
+        "automation"
+      ]
     }
   ]
 }

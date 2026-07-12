@@ -37,17 +37,9 @@ And one last safety net: if some ping gets stuck for good — its lock expires o
 
 ---
 
-## `pat` — GitHub App token, no manual PAT
+## `pat` moved out
 
-The plugin also ships **`pat`** — a tiny CLI that kills the worst GitHub chore: creating a Personal Access Token by hand on github.com/settings/tokens every time a new project needs cross-repo access from Actions.
-
-You create a **GitHub App** once (~3 minutes, in the GitHub UI). Its private key lives in **Bitwarden**, never on disk. `pat` signs a JWT with that key, asks GitHub for a short-lived **installation access token** (1 hour, minted fresh on every run), and drops it into a repo's Actions secret:
-
-```
-/claude-tools:pat grant --secret APP_TOKEN --repo axisrow/profile
-```
-
-Because the App is installed on your whole account, **every new repo is covered with zero extra steps** — no more opening the token page, no more expiring PATs. Subcommands: `pat install` (verify setup), `pat token` (print a token), `pat grant` (store it as a secret). See `/claude-tools:pat` for the one-time App + Bitwarden setup.
+The **`pat`** tool (GitHub App installation token, no manual PAT) now lives in its own plugin — see [`plugins/pat`](../pat). It was unrelated to this plugin's rate-limit cron, so it got its own home.
 
 ---
 
