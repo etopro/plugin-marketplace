@@ -143,7 +143,11 @@ pat_fresh_token_into() {
     : "${PAT_APP_ID:?PAT_APP_ID is not set (config or env).}"
     : "${PAT_BW_ITEM:?PAT_BW_ITEM is not set (config or env).}"
 
-    local pem_file jwt inst_json token expires
+    # NOTE: pem_file/jwt/inst_json are local, but token/expires are NOT — they
+    # are the caller's variables (named by $_tok_var/$_exp_var), assigned via
+    # printf -v. Declaring them local here would shadow the caller's vars and
+    # break the hand-off.
+    local pem_file jwt inst_json
     pat_with_pem pem_file
     jwt=$(pat_jwt_sign "$PAT_APP_ID" "$pem_file")
     [ -z "$jwt" ] && pat_die "JWT signing failed (is the PEM valid?)."
@@ -231,8 +235,11 @@ cmd_grant() {
     local repo token expires
     repo=$(pat_resolve_repo)
     pat_fresh_token_into token expires
-    gh secret set "$OPT_SECRET" --repo "$repo" --body "$token" >/dev/null \
+    # SECURITY: pipe the token via stdin, not --body, so it never appears in
+    # the `gh` process argv (visible via `ps` while gh runs).
+    printf '%s' "$token" | gh secret set "$OPT_SECRET" --repo "$repo" >/dev/null \
         || pat_die "gh secret set failed for $repo."
+    token=""
     printf '✓ %s set in %s · valid until %s\n' "$OPT_SECRET" "$repo" "$expires"
     [ -n "${OPT_NOTE:-}" ] && printf '  note: %s\n' "$OPT_NOTE"
 }
