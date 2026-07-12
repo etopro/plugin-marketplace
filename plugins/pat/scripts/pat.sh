@@ -155,7 +155,11 @@ pat_fresh_token_into() {
     local _tok_var=$1 _exp_var=$2
     pat_load_config
     : "${PAT_APP_ID:?PAT_APP_ID is not set (config or env).}"
-    : "${PAT_BW_ITEM:?PAT_BW_ITEM is not set (config or env).}"
+    # PAT_BW_ITEM is only required when the PEM comes from Bitwarden. In CI mode
+    # (APP_PRIVATE_KEY set in env) the key comes from env and Bitwarden is unused.
+    if [ -z "${APP_PRIVATE_KEY:-}" ]; then
+        : "${PAT_BW_ITEM:?PAT_BW_ITEM is not set (config or env).}"
+    fi
 
     # NOTE: pem_file/jwt/inst_json are local, but token/expires are NOT — they
     # are the caller's variables (named by $_tok_var/$_exp_var), assigned via
