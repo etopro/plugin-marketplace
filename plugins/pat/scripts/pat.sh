@@ -59,20 +59,16 @@ pat_load_config() {
 
 pat_require_deps() {
     command -v openssl >/dev/null 2>&1 || pat_die "openssl not found on PATH."
+    command -v jq      >/dev/null 2>&1 || pat_die "jq not found on PATH (required for parsing)."
     command -v bw       >/dev/null 2>&1 || pat_die "bw (Bitwarden CLI) not found on PATH."
     command -v gh       >/dev/null 2>&1 || pat_die "gh (GitHub CLI) not found on PATH."
     command -v curl     >/dev/null 2>&1 || pat_die "curl not found on PATH."
 }
 
-# pat_jwt_value <json> <key>  → echoes a top-level string value (grep fallback if no jq).
+# pat_json_get <json> <key>  → echoes a top-level string value. Requires jq.
 pat_json_get() {
     local json=$1 key=$2
-    if command -v jq >/dev/null 2>&1; then
-        printf '%s' "$json" | jq -r --arg k "$key" '.[$k] // empty'
-    else
-        printf '%s' "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" \
-            | head -1 | sed 's/.*:[[:space:]]*"//;s/"$//'
-    fi
+    printf '%s' "$json" | jq -r --arg k "$key" '.[$k] // empty'
 }
 
 # pat_resolve_repo  → echoes OWNER/REPO from --repo or the current git origin.
@@ -84,19 +80,20 @@ pat_resolve_repo() {
     local url
     url=$(git config --get remote.origin.url 2>/dev/null || true)
     [ -z "$url" ] && pat_die "no --repo given and not inside a git repo with origin."
-    # normalize ssh/git/https URLs to owner/repo
+    # normalize ssh/git/https URLs to owner/repo (strip trailing .git)
     printf '%s' "$url" \
-        | sed -E 's#.*[:/]([^/]+/[^/]+?)(\.git)?$#\1#'
+        | sed -E 's#.*[:/]([^/]+/[^/]+)(\.git)?$#\1#' \
+        | sed -E 's#\.git$##'
 }
 
 # PEM temp-file lifecycle.
 #
-# SECURITY: the path MUST be managed in the parent shell. Earlier versions echoed
-# the path from pat_get_pem_file and captured it via command substitution
-# (`pem_file=$(pat_get_pem_file)`), which runs the function in a SUBSHELL — the
-# assignment to pat_PEM_TMP never reached the parent, so the EXIT trap saw an
-# empty value and every PEM file was left behind on disk. Callers now invoke
-# pat_with_pem <callback-var> directly (no $(...)), so the trap always cleans up.
+# SECURITY: the temp file holding the App private key MUST be removed on every
+# exit path. The cleanup runs from TWO traps:
+#   - a global EXIT trap (covers the normal top-level run), and
+#   - a trap installed INSIDE pat_with_pem (covers subshells — piped callers
+#     like `pat_fresh_token | cut` run the function in a subshell whose EXIT
+#     trap is NOT the parent's; an earlier version leaked PEM copies there).
 pat_PEM_TMP=""
 pat_pem_cleanup() {
     [ -n "$pat_PEM_TMP" ] && [ -f "$pat_PEM_TMP" ] && rm -f "$pat_PEM_TMP"
@@ -107,8 +104,8 @@ trap pat_pem_cleanup EXIT
 # pat_with_pem <var_name>
 # Fetches the PEM from Bitwarden, writes it to a 0600 temp file, and stores the
 # path in the variable NAMED by <var_name> (set in the CALLING shell, not a
-# subshell). Registers the same path in pat_PEM_TMP so the EXIT trap removes it.
-# Removes the file eagerly on any error so nothing persists even mid-run.
+# subshell). Registers a local EXIT trap in the CURRENT shell so the file is
+# removed even when this runs inside a piped subshell.
 pat_with_pem() {
     local _out_var=$1
     pat_bw_ensure_unlocked || pat_die "cannot unlock Bitwarden."
@@ -120,37 +117,28 @@ pat_with_pem() {
     pat_PEM_TMP=$(mktemp -t pat.XXXXXX) || { pat_pem_cleanup; pat_die "mktemp failed."; }
     chmod 600 "$pat_PEM_TMP"
     printf '%s\n' "$pem" >"$pat_PEM_TMP" || { pat_pem_cleanup; pat_die "failed to write PEM temp file."; }
+    # (re)install the EXIT trap in THIS shell so piped-subshell callers clean up too.
+    trap pat_pem_cleanup EXIT
     # assign in the calling shell (printf -v does NOT spawn a subshell)
     printf -v "$_out_var" '%s' "$pat_PEM_TMP"
 }
 
-# pat_installation_id_for <jwt> <app_id>  → echoes the installation id for the app.
+# pat_installation_id_for <jwt> <app_id>  → echoes the installation id for the app. Requires jq.
 pat_installation_id_for() {
     local jwt=$1 app_id=$2
     local json
     json=$(pat_jwt_installations "$jwt") || pat_die "failed to list App installations."
-    if command -v jq >/dev/null 2>&1; then
-        printf '%s' "$json" \
-            | jq -r --arg app "$app_id" '.[] | select((.app_id|tostring)==$app) | .id' \
-            | head -1
-    else
-        # crude grep fallback: find the first "id" after an "app_id" match
-        printf '%s' "$json" \
-            | awk -v app="$app_id" '
-                /"app_id"[[:space:]]*:[[:space:]]*"/ {
-                    match($0, /"app_id"[[:space:]]*:[[:space:]]*"?([0-9]+)/, m);
-                    if (m[1]==app) want=1
-                }
-                want && /"id"[[:space:]]*:[[:space:]]*[0-9]+/ {
-                    match($0, /"id"[[:space:]]*:[[:space:]]*([0-9]+)/, m);
-                    print m[1]; want=0; exit
-                }
-            ' | head -1
-    fi
+    printf '%s' "$json" \
+        | jq -r --arg app "$app_id" '.[] | select((.app_id|tostring)==$app) | .id' \
+        | head -1
 }
 
-# pat_fresh_token  → echoes "<token>\t<expires_at>" (tab-separated).
-pat_fresh_token() {
+# pat_fresh_token_into <token_var> <expires_var>
+# Mints a fresh installation token and stores token + expiry in the named
+# variables (set in the CALLING shell — no pipe / $(...) subshell, so the
+# PEM trap always runs in the same shell that created the temp file).
+pat_fresh_token_into() {
+    local _tok_var=$1 _exp_var=$2
     pat_load_config
     : "${PAT_APP_ID:?PAT_APP_ID is not set (config or env).}"
     : "${PAT_BW_ITEM:?PAT_BW_ITEM is not set (config or env).}"
@@ -160,7 +148,6 @@ pat_fresh_token() {
     jwt=$(pat_jwt_sign "$PAT_APP_ID" "$pem_file")
     [ -z "$jwt" ] && pat_die "JWT signing failed (is the PEM valid?)."
 
-    # sanity: App must be reachable with this JWT
     pat_jwt_app_meta "$jwt" >/dev/null 2>&1 || pat_die "JWT rejected by GET /app (wrong APP_ID or key?)."
 
     local installation_id
@@ -172,7 +159,8 @@ pat_fresh_token() {
     token=$(pat_json_get "$inst_json" "token")
     expires=$(pat_json_get "$inst_json" "expires_at")
     [ -z "$token" ] && pat_die "installation token response had no .token."
-    printf '%s\t%s' "$token" "$expires"
+    printf -v "$_tok_var" '%s' "$token"
+    printf -v "$_exp_var" '%s' "$expires"
 }
 
 # ---- subcommands ----
@@ -232,17 +220,17 @@ cmd_install() {
 
 cmd_token() {
     pat_require_deps
-    pat_fresh_token | cut -f1
+    local token expires
+    pat_fresh_token_into token expires
+    printf '%s' "$token"
 }
 
 cmd_grant() {
     pat_require_deps
     [ -n "${OPT_SECRET:-}" ] || pat_die "--secret is required for grant."
-    local repo pair token expires
+    local repo token expires
     repo=$(pat_resolve_repo)
-    pair=$(pat_fresh_token)
-    token=${pair%%$'\t'*}
-    expires=${pair#*$'\t'}
+    pat_fresh_token_into token expires
     gh secret set "$OPT_SECRET" --repo "$repo" --body "$token" >/dev/null \
         || pat_die "gh secret set failed for $repo."
     printf '✓ %s set in %s · valid until %s\n' "$OPT_SECRET" "$repo" "$expires"
