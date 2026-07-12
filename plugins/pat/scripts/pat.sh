@@ -60,9 +60,13 @@ pat_load_config() {
 pat_require_deps() {
     command -v openssl >/dev/null 2>&1 || pat_die "openssl not found on PATH."
     command -v jq      >/dev/null 2>&1 || pat_die "jq not found on PATH (required for parsing)."
-    command -v bw       >/dev/null 2>&1 || pat_die "bw (Bitwarden CLI) not found on PATH."
     command -v gh       >/dev/null 2>&1 || pat_die "gh (GitHub CLI) not found on PATH."
     command -v curl     >/dev/null 2>&1 || pat_die "curl not found on PATH."
+    # bw is only required when the PEM comes from Bitwarden. In CI mode the PEM
+    # is supplied via APP_PRIVATE_KEY, so bw need not be installed.
+    if [ -z "${APP_PRIVATE_KEY:-}" ]; then
+        command -v bw >/dev/null 2>&1 || pat_die "bw (Bitwarden CLI) not found on PATH (or set APP_PRIVATE_KEY for CI mode)."
+    fi
 }
 
 # pat_json_get <json> <key>  → echoes a top-level string value. Requires jq.
@@ -108,15 +112,25 @@ trap pat_pem_cleanup EXIT
 # removed even when this runs inside a piped subshell.
 pat_with_pem() {
     local _out_var=$1
-    pat_bw_ensure_unlocked || pat_die "cannot unlock Bitwarden."
     local pem
-    pem=$(pat_bw_get_field "$PAT_BW_ITEM" "$PAT_BW_FIELD") || {
-        pat_pem_cleanup; pat_die "failed to read PEM from Bitwarden."
-    }
-    [ -z "$pem" ] && { pat_pem_cleanup; pat_die "empty PEM from Bitwarden item '$PAT_BW_ITEM' field '$PAT_BW_FIELD'."; }
+
+    # CI mode: when APP_PRIVATE_KEY is set in the environment (e.g. a GitHub
+    # Actions secret), use it directly and skip Bitwarden entirely — bw is not
+    # available in CI. Priority: APP_PRIVATE_KEY env > Bitwarden.
+    if [ -n "${APP_PRIVATE_KEY:-}" ]; then
+        pem="$APP_PRIVATE_KEY"
+    else
+        pat_bw_ensure_unlocked || pat_die "cannot unlock Bitwarden."
+        pem=$(pat_bw_get_field "$PAT_BW_ITEM" "$PAT_BW_FIELD") || {
+            pat_pem_cleanup; pat_die "failed to read PEM from Bitwarden."
+        }
+        [ -z "$pem" ] && { pat_pem_cleanup; pat_die "empty PEM from Bitwarden item '$PAT_BW_ITEM' field '$PAT_BW_FIELD'."; }
+    fi
+
     pat_PEM_TMP=$(mktemp -t pat.XXXXXX) || { pat_pem_cleanup; pat_die "mktemp failed."; }
     chmod 600 "$pat_PEM_TMP"
     printf '%s\n' "$pem" >"$pat_PEM_TMP" || { pat_pem_cleanup; pat_die "failed to write PEM temp file."; }
+    pem=""
     # (re)install the EXIT trap in THIS shell so piped-subshell callers clean up too.
     trap pat_pem_cleanup EXIT
     # assign in the calling shell (printf -v does NOT spawn a subshell)
@@ -179,18 +193,22 @@ cmd_install() {
     else
         echo "  ✗ PAT_APP_ID not set"; ok=0
     fi
-    if [ -n "${PAT_BW_ITEM:-}" ]; then
-        echo "  ✓ PAT_BW_ITEM = $PAT_BW_ITEM"
+    if [ -n "${APP_PRIVATE_KEY:-}" ]; then
+        echo "  ✓ CI mode: APP_PRIVATE_KEY set (Bitwarden skipped)"
     else
-        echo "  ✗ PAT_BW_ITEM not set"; ok=0
-    fi
-    echo "  ✓ PAT_BW_FIELD = ${PAT_BW_FIELD:-$PAT_BW_FIELD_DEFAULT}"
+        if [ -n "${PAT_BW_ITEM:-}" ]; then
+            echo "  ✓ PAT_BW_ITEM = $PAT_BW_ITEM"
+        else
+            echo "  ✗ PAT_BW_ITEM not set"; ok=0
+        fi
+        echo "  ✓ PAT_BW_FIELD = ${PAT_BW_FIELD:-$PAT_BW_FIELD_DEFAULT}"
 
-    pat_bw_ensure_unlocked >/dev/null || { ok=0; }
-    if pat_bw_item_exists "$PAT_BW_ITEM"; then
-        echo "  ✓ Bitwarden item '$PAT_BW_ITEM' found"
-    else
-        echo "  ✗ Bitwarden item '$PAT_BW_ITEM' not found"; ok=0
+        pat_bw_ensure_unlocked >/dev/null || { ok=0; }
+        if pat_bw_item_exists "$PAT_BW_ITEM"; then
+            echo "  ✓ Bitwarden item '$PAT_BW_ITEM' found"
+        else
+            echo "  ✗ Bitwarden item '$PAT_BW_ITEM' not found"; ok=0
+        fi
     fi
 
     # JWT + App reachable?
