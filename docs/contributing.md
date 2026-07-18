@@ -179,17 +179,22 @@ of a local path:
 }
 ```
 
-**When you bump the upstream repo, you MUST bump `version` here too.**
+**Keep `version` here in sync with the upstream repo.**
 
-Claude Code resolves the version of a `url`-sourced plugin from **this
-marketplace.json**, not from the upstream repository. If the two disagree, the
-resolved version still matches what users already have installed, so
-`claude plugin install` reports *"already installed"* and skips the update.
-There is no error message — users simply keep running stale code, and the
-install record will claim a version that the cached code does not actually
-contain.
+Where the version is resolved from depends on the upstream layout. A
+`plugin.json` at the **root** of the upstream repo wins; only if there is none
+does this marketplace.json become authoritative.
 
-Bumping the upstream repo alone is therefore **not enough**. Both must change.
+- **Root manifest present** → it overrides this file, and a stale `version` here
+  is cosmetic (installs still work). Keep it accurate anyway.
+- **No root manifest** (e.g. a monorepo with the manifest under
+  `plugins/<name>/.claude-plugin/plugin.json`) → **this file is authoritative.**
+  A stale value resolves to what users already have installed, so
+  `claude plugin install` reports *"already installed"* and skips — no error,
+  users keep running stale code, and the install record claims a version the
+  cached code does not contain.
+
+For the second case, bumping the upstream repo alone is **not enough**.
 
 Verify before committing:
 

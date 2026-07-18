@@ -9,13 +9,24 @@ Entries come in two kinds:
 - **local** — `"source": "./plugins/foo"`. The manifest ships in the same commit,
   so the version cannot drift.
 - **external** — `"source": {"source": "url", "url": "https://github.com/..."}`.
-  The version is resolved from **this marketplace.json**, NOT from the upstream repo.
+  Where the version comes from depends on the upstream repo layout.
 
-**Bumping the upstream repository is not enough.** If `marketplace.json` still
-declares the old version, Claude Code resolves it to the version users already
-have installed, so `claude plugin install` reports *"already installed"* and
-silently skips. No error is printed. The install record then claims a version
-that the cached code does not contain, and users keep running stale code.
+**Resolution order (verified empirically 2026-07-19):** a `plugin.json` at the
+**root** of the upstream repo wins. Only if there is none does `marketplace.json`
+become authoritative.
+
+That split decides whether a stale entry here is harmless or a real bug:
+
+- **Upstream has a root `.claude-plugin/plugin.json`** → it overrides this file.
+  A stale `version` here is cosmetic; installs still resolve correctly.
+  (`skill-dokku` installed 1.1.3 while this file said 1.1.2.)
+- **Upstream has no root manifest** — e.g. a monorepo keeping it at
+  `plugins/<name>/.claude-plugin/plugin.json` — → **this file is authoritative.**
+  A stale `version` resolves to what users already have, so
+  `claude plugin install` reports *"already installed"* and silently skips. No
+  error. The install record then claims a version the cached code does not
+  contain, and users keep running stale code. This is what happened to
+  `codex-fork`.
 
 This has already happened more than once. Do not diagnose it from scratch again.
 

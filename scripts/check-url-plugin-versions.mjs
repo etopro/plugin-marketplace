@@ -102,12 +102,38 @@ async function main() {
       continue;
     }
 
+    // Resolution order (verified empirically 2026-07-19):
+    // a plugin.json at the REPO ROOT wins over marketplace.json. skill-dokku has
+    // one, so it installed 1.1.3 even while this file still declared 1.1.2.
+    // Without a root manifest (codex-plugin-cc keeps its manifest under
+    // plugins/codex/), there is nothing to override with, so marketplace.json is
+    // authoritative — and a stale value there causes a silent "already installed"
+    // skip. Only that second case is an actual bug.
+    const rootManifest = upstream.find(
+      (candidate) => candidate.path === ".claude-plugin/plugin.json"
+    );
     const match = upstream.find((candidate) => candidate.version === entry.version);
+
+    let status;
+    let reason;
+    if (match) {
+      status = "ok";
+    } else if (rootManifest) {
+      // Cosmetic: installs resolve from the root manifest, not from this file.
+      status = "stale";
+      reason = "root plugin.json overrides marketplace.json; installs are correct";
+    } else {
+      // Authoritative and wrong → users silently keep the installed build.
+      status = "drift";
+      reason = "no root plugin.json; marketplace.json is authoritative";
+    }
+
     results.push({
       name: entry.name,
-      status: match ? "ok" : "drift",
+      status,
       declared: entry.version,
       upstream: upstream.map((candidate) => `${candidate.version} (${candidate.path})`),
+      reason,
       repo
     });
   }
@@ -116,21 +142,39 @@ async function main() {
     console.log(JSON.stringify(results, null, 2));
   } else {
     for (const result of results) {
-      const label = { ok: "OK   ", drift: "DRIFT", skip: "SKIP ", error: "ERROR" }[result.status];
+      const label = {
+        ok: "OK   ",
+        drift: "DRIFT",
+        stale: "STALE",
+        skip: "SKIP ",
+        error: "ERROR"
+      }[result.status];
       let line = `${label} ${result.name.padEnd(18)}`;
       if (result.declared) line += ` declared=${result.declared}`;
-      if (result.status === "drift") line += `  upstream=${result.upstream.join(", ")}`;
+      if (result.status === "drift" || result.status === "stale") {
+        line += `  upstream=${result.upstream.join(", ")}`;
+      }
       if (result.reason) line += `  (${result.reason})`;
       console.log(line);
     }
+  }
+
+  const stale = results.filter((result) => result.status === "stale");
+  if (stale.length > 0) {
+    console.log(
+      `\n${stale.length} entr${stale.length === 1 ? "y is" : "ies are"} behind upstream but harmless:` +
+        ` the repo ships a root plugin.json that overrides this file.` +
+        `\nWorth tidying for accuracy; installs already resolve correctly.`
+    );
   }
 
   const drifted = results.filter((result) => result.status === "drift");
   if (drifted.length > 0) {
     console.error(
       `\n${drifted.length} entr${drifted.length === 1 ? "y" : "ies"} out of sync with upstream.` +
-        `\nBump the "version" field in .claude-plugin/marketplace.json to match, or users will` +
-        `\nsilently keep the already-installed build ("already installed" → no update).`
+        `\nThese repos have NO root plugin.json, so marketplace.json is authoritative.` +
+        `\nBump the "version" field here to match, or users will silently keep the` +
+        `\nalready-installed build ("already installed" → no update).`
     );
     process.exit(1);
   }
