@@ -71,6 +71,17 @@ jobs:
             fi
           done
 
+      # A `url`-sourced entry resolves its version from marketplace.json, NOT from
+      # the upstream repo. If upstream is bumped and this file is not, installs
+      # silently report "already installed" and users keep running stale code.
+      # Advisory only: this reaches out to third-party repos, so a failure here
+      # must not block a PR that did not touch the drifted entry.
+      - name: Check url-sourced plugin versions match upstream
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-url-plugin-versions.mjs
+
       - name: Summary
         run: |
           echo "==================================="
