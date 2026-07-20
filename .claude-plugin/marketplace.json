@@ -242,10 +242,10 @@
         "url": "https://github.com/axisrow/codex-plugin-cc.git",
         "path": "plugins/codex",
         "ref": "main",
-        "sha": "2ee9914c29cec7b00a919ce18bd788495299d747"
+        "sha": "c25698b104289701c50b5b8282751b89f93a4291"
       },
-      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, deterministic in-process BrokerController tests",
-      "version": "1.0.6-fork.3",
+      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, rescue default --background + terminal-on-timeout, worktree isolation (leave-branch, based on openai#137), 4 security fixes (symlink guard, symlink neutralize, git-dir eliminate, accumulation warn)",
+      "version": "1.0.6-fork.4",
       "author": {
         "name": "axisrow"
       },
