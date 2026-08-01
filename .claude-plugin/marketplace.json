@@ -167,7 +167,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/claude-code-cycle-review-skill.git"
       },
-      "version": "0.5.0",
+      "version": "0.5.3",
       "category": "workflow",
       "homepage": "https://github.com/axisrow/claude-code-cycle-review-skill",
       "repository": "https://github.com/axisrow/claude-code-cycle-review-skill",
