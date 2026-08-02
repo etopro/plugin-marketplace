@@ -242,10 +242,10 @@
         "url": "https://github.com/axisrow/codex-plugin-cc.git",
         "path": "plugins/codex",
         "ref": "main",
-        "sha": "a0e1c118125850e21b3f6e73e532feda6abc22f7"
+        "sha": "15f22e6bca0d67acdff61c7c25a990b4bc0c44a7"
       },
-      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, rescue default --background + terminal-on-timeout, worktree isolation (leave-branch, based on openai#137), 4 security fixes (symlink guard, symlink neutralize, git-dir eliminate, accumulation warn), bounded broker + spawned-app-server handshake (#29/#31), config-driven sandbox + task --read-only with resume fail-closed (#508/#33), model/effort in /codex:rescue launch line (#34)",
-      "version": "1.0.6-fork.5",
+      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, rescue default --background + terminal-on-timeout, worktree isolation (leave-branch, based on openai#137), 4 security fixes (symlink guard, symlink neutralize, git-dir eliminate, accumulation warn), bounded broker + spawned-app-server handshake (#29/#31), config-driven sandbox + task --read-only with resume fail-closed (#508/#33), model/effort in /codex:rescue launch line (#34), persisted review/adversarial-review threads (#37)",
+      "version": "1.0.6-fork.6",
       "author": {
         "name": "axisrow"
       },
