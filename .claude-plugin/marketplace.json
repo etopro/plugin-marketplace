@@ -259,7 +259,7 @@
     },
     {
       "name": "trace-mcp",
-      "description": "Explicit per-project trace-mcp installation with an optional built-in benchmark run and a follow-up measurement against real session-log savings a week later.",
+      "description": "Explicit per-project trace-mcp installation and symmetric removal, with an optional built-in benchmark run and a follow-up measurement against real session-log savings a week later.",
       "author": {
         "name": "axisrow"
       },
@@ -267,7 +267,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/trace-mcp-plugin.git"
       },
-      "version": "0.1.1",
+      "version": "0.1.2",
       "category": "development",
       "homepage": "https://github.com/axisrow/trace-mcp-plugin",
       "repository": "https://github.com/axisrow/trace-mcp-plugin",
