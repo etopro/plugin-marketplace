@@ -243,8 +243,8 @@
         "path": "plugins/codex",
         "ref": "main"
       },
-      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, rescue default --background + terminal-on-timeout, worktree isolation (leave-branch, based on openai#137), 4 security fixes (symlink guard, symlink neutralize, git-dir eliminate, accumulation warn), bounded broker + spawned-app-server handshake (#29/#31), config-driven sandbox + task --read-only with resume fail-closed (#508/#33), model/effort in /codex:rescue launch line (#34), persisted review/adversarial-review threads (#37), idle-based turn timeout (#41)",
-      "version": "c33cf49",
+      "description": "axisrow fork of openai/codex-plugin-cc: RPC effort/model override (#471), model aliases (sol/terra/luna/spark), review interface parity (#523), job liveness reconcile (#497), resolved job records (#506), broker idle-timeout (#490), bounded shutdown + PID-reuse guard, rescue default --background + terminal-on-timeout, worktree isolation (leave-branch, based on openai#137), 4 security fixes (symlink guard, symlink neutralize, git-dir eliminate, accumulation warn), bounded broker + spawned-app-server handshake (#29/#31), config-driven sandbox + task --read-only with resume fail-closed (#508/#33), model/effort in /codex:rescue launch line (#34), persisted review/adversarial-review threads (#37), idle-based turn timeout (#41/#43/#44), bounded turn interrupt so cancel can't hang (#47), cancel for turns orphaned by a SIGKILLed companion (#42), replace a live-but-unreachable broker (#50), reap detached workers that die before 'running' (#52), overridable spawned-app-server handshake deadline (#55)",
+      "version": "3ad5831",
       "author": {
         "name": "axisrow"
       },
