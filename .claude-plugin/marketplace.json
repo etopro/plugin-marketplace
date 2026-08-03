@@ -267,7 +267,7 @@
         "source": "url",
         "url": "https://github.com/axisrow/trace-mcp-plugin.git"
       },
-      "version": "0.1.3",
+      "version": "0.1.4",
       "category": "development",
       "homepage": "https://github.com/axisrow/trace-mcp-plugin",
       "repository": "https://github.com/axisrow/trace-mcp-plugin",
